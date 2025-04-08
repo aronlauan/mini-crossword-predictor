@@ -11,7 +11,7 @@ numpy
 
 ## Goal
 
-Leveraging a historical reference of a group of friends' individual NYT Mini Crossword completion times for a given date, <b>predict each person's time for the upcoming day, relevant to recent time trends and expected difficulty for the given day of the week.</b>
+Using a dataset containing a group of friends' individual NYT Mini Crossword completion times at each date, <b>predict each person's time for the upcoming day, relevant to recent time trends and expected difficulty for the given day of the week.</b>
 
 ## Logic Walkthrough
 tbd
