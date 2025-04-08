@@ -1,4 +1,4 @@
-# Mini Crossword Completetion Time Prediction
+# Mini Crossword Completion Time Prediction
 
 Predicting my friends' (and my) NYT Mini Crossword time.
 
