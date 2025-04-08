@@ -9,6 +9,16 @@ pandas
 numpy
 ```
 
-## Overview
+## Goal
 
-Leveraging a historical reference of a group of friends' individual NYT Mini Crossword completion times, <b>predict each person's time for the upcoming day, relevant to recent time trends and day difficulty</b>
+Leveraging a historical reference of a group of friends' individual NYT Mini Crossword completion times for a given date, <b>predict each person's time for the upcoming day, relevant to recent time trends and expected difficulty for the given day of the week.</b>
+
+## Logic Walkthrough
+tbd
+
+## Quickstart
+Install requirements:
+```bash
+pip install -r requirements.txt
+```
+
