@@ -16,6 +16,9 @@ Using a dataset containing a group of friends' individual NYT Mini Crossword com
 ## Logic Walkthrough
 tbd
 
+## Results
+tbd
+
 ## Quickstart
 Install requirements:
 ```bash
