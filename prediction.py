@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
+import logging
 from datetime import datetime, timedelta
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
-import logging
+from xgboost import XGBRegressor
 
 from preprocess import *
 
@@ -31,11 +31,11 @@ logger.addHandler(console_handler)
 raw_df = melt_raw_file('mini_stats.csv')
 metrics_df = add_features(raw_df)
 
-features = ['person', 'weekday', 'difficulty', 'avg_last_3', 'streak']
+features = ['person', 'weekday', 'difficulty', 'avg_last_5', 'streak']
 target = 'solved_in_seconds'
 
 # drop rows with a rolling avg of NULL
-model_df = metrics_df.dropna(subset=['avg_last_3']).copy()
+model_df = metrics_df.dropna(subset=['avg_last_5']).copy()
 
 X = model_df[features]
 y = model_df[target]
@@ -44,7 +44,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle
 
 # pipeline
 categorical = ['person', 'weekday']
-numerical = ['difficulty', 'avg_last_3', 'streak']
+numerical = ['difficulty', 'avg_last_5', 'streak']
 
 preprocessor = ColumnTransformer(
     [('cat', OneHotEncoder(handle_unknown='ignore'), categorical)],
@@ -53,7 +53,11 @@ preprocessor = ColumnTransformer(
 
 pipeline = Pipeline([
     ('preprocess', preprocessor),
-    ('model', RandomForestRegressor(n_estimators=100, random_state=42))
+    ('model', XGBRegressor(n_estimators=100,
+                           random_state=42,
+                           learning_rate=0.1,
+                           max_depth=4,
+                           objective='reg:squarederror'))
 ])
 
 # Train model
@@ -69,14 +73,14 @@ print(f'MAE: {mae:.2f} sec')
 print(f'RMSE: {rmse:.2f} sec')
 
 
-print("\nSample Predictions:")
-sample_preds = pd.DataFrame({
-    'date': model_df.loc[y_test.index, 'date'],
-    'person': X_test['person'].values,
-    'actual': [sec_to_min(sec) for sec in y_test],
-    'predicted': [sec_to_min(sec) for sec in y_pred]
-})
-print(sample_preds.head(10))
+# print("\nSample Predictions:")
+# sample_preds = pd.DataFrame({
+#     'date': model_df.loc[y_test.index, 'date'],
+#     'person': X_test['person'].values,
+#     'actual': [sec_to_min(sec) for sec in y_test],
+#     'predicted': [sec_to_min(sec) for sec in y_pred]
+# })
+# print(sample_preds.head(10))
 
 
 def predict_tomorrow(data, model_pipeline: Pipeline) -> pd.DataFrame:
@@ -103,7 +107,7 @@ def predict_tomorrow(data, model_pipeline: Pipeline) -> pd.DataFrame:
         completed_data = person_data[person_data['time'].notna() & (person_data['time'].str.lower() != 'n/a')]
 
         # Calculate rolling average of the last 3 completed solves (if available)
-        avg_last_3 = completed_data.tail(3)['solved_in_seconds'].mean() if len(completed_data) >= 3 else completed_data['solved_in_seconds'].mean()
+        avg_last_5 = completed_data.tail(5)['solved_in_seconds'].mean() if len(completed_data) >= 5 else completed_data['solved_in_seconds'].mean()
 
         difficulty = {
             'Monday': 1,
@@ -119,7 +123,7 @@ def predict_tomorrow(data, model_pipeline: Pipeline) -> pd.DataFrame:
             'person': [person],
             'weekday': [weekday],
             'difficulty': [difficulty],
-            'avg_last_3': [avg_last_3],
+            'avg_last_5': [avg_last_5],
             'streak': [completed_data['streak'].iloc[-1] if len(completed_data) > 0 else 0]
         })
 
@@ -129,7 +133,6 @@ def predict_tomorrow(data, model_pipeline: Pipeline) -> pd.DataFrame:
         predictions.append({
             'person': person,
             'predicted_time': predicted_time,
-            'predicted_seconds': predicted_seconds,
             'weekday': weekday,
             'predicted_for_date': tomorrow
         })
@@ -141,4 +144,4 @@ def predict_tomorrow(data, model_pipeline: Pipeline) -> pd.DataFrame:
 
 if __name__ == "__main__":
     prediction_df = predict_tomorrow(metrics_df, pipeline)
-    print(prediction_df[['person', 'predicted_time']])
+    print(prediction_df)
