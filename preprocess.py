@@ -78,11 +78,11 @@ def add_features(metrics_df: pd.DataFrame) -> pd.DataFrame:
     # Sort for rolling calculations
     metrics_df =  metrics_df.sort_values(by=['person', 'date'])
     
-    metrics_df['avg_last_3'] = (
+    metrics_df['avg_last_5'] = (
         metrics_df
         .groupby('person')['solved_in_seconds']
         .shift(1)  # exclude today's time
-        .rolling(window=3, min_periods=1)
+        .rolling(window=5, min_periods=1)
         .mean()
         .reset_index(level=0, drop=True)
     )
